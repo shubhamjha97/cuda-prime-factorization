@@ -2,7 +2,7 @@
 #include <math.h>
 
 void printUnsignedInteger(unsigned int x) {
-    printf("%u ", i);
+    printf("%u ", x);
 }
 
 int main(int argc, char *argv[]) {
