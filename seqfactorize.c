@@ -1,28 +1,28 @@
 #include <stdio.h>
 #include <math.h>
 
-void printInteger(unsigned int x) {
-    printf("%d ", x);
+void printUnsignedInteger(unsigned int x) {
+    printf("%u ", i);
 }
 
 int main(int argc, char *argv[]) {
     unsigned int n;
-    sscanf(argv[1], "%d", &n);
+    sscanf(argv[1], "%u", &n);
 
     while(!(n%2)) {
-        printInteger(2);
+        printUnsignedInteger(2);
         n/=2;
     }
 
     int i_limit = ceil(sqrt(n));
     for(int i=3; i<=i_limit; i+=2) {
         while(!(n%i)) {
-            printInteger(i);
+            printUnsignedInteger(i);
             n /= i;
         }
     }
 
-    if(n>2) { printInteger(n); }
+    if(n>2) { printUnsignedInteger(n); }
 
     return 0;
 }
