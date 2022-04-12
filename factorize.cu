@@ -4,8 +4,13 @@
 #include <stdlib.h>
 using namespace std;
 
+
+// TODO: Add a global variable n which is reduced by (i^freq)
+// TODO: Make sieve size sqrt
+// TODO: remove temp logic from preprocessing
+
 // Function declarations
-void processResult(unsigned int, unsigned int, char *, unsigned int);
+void processResult(unsigned int, unsigned int, unsigned int *, char *, unsigned int);
 void printUnsignedInteger(unsigned int);
 __global__
 void sieve_kernel(bool *, unsigned int, unsigned int, unsigned int);
@@ -31,6 +36,12 @@ int main(int argc, char* argv[]) {
     unsigned int prime_number_array_size = 0;
     unsigned int *prime_number_array = generate_prime_numbers_array(sieve, sieve_size, prime_number_array_size);
 
+    // TODO: remove
+    for(int i=0; i<prime_number_array_size; i++) {
+        printf("%u ", prime_number_array[i]);
+    }
+    printf("\n");
+
     // Generate prime factorization
     char *prime_factors_freq = prime_factorization(prime_number_array, prime_number_array_size, n);
 
@@ -40,7 +51,7 @@ int main(int argc, char* argv[]) {
 //    }
 
     // Process and print the result
-    processResult(n, two_freq, prime_factors_freq, prime_number_array_size);
+    processResult(n, two_freq, prime_number_array, prime_factors_freq, prime_number_array_size);
 
     return 0;
 }
@@ -49,7 +60,7 @@ void printUnsignedInteger(unsigned int i) {
     printf("%u ", i);
 }
 
-void processResult(unsigned int n, unsigned int two_freq, char *frequency_table, unsigned int frequency_table_size) {
+void processResult(unsigned int n, unsigned int two_freq, unsigned int *prime_number_array, char *frequency_table, unsigned int frequency_table_size) {
 //    unsigned int temp = 1;
     while(two_freq--) {
         printUnsignedInteger(2);
@@ -58,7 +69,7 @@ void processResult(unsigned int n, unsigned int two_freq, char *frequency_table,
     for(unsigned int i=1; i<frequency_table_size; i++) {
         if(frequency_table[i]) {
             while(frequency_table[i]--) {
-                int current = 1 + 2 * i;
+                int current = prime_number_array[i];
                 printUnsignedInteger(current);
 //                temp *= current;
             }
@@ -172,7 +183,7 @@ __global__
 void factorize_kernel(unsigned int *prime_numbers, char *frequency_table, unsigned int n, unsigned int array_size) {
     unsigned int global_thread_index = BLOCK_SIZE * blockIdx.x + threadIdx.x;
 
-    if(global_thread_index>0 && global_thread_index < array_size) {
+    if(global_thread_index > 0 && global_thread_index < array_size) {
         unsigned int i = prime_numbers[global_thread_index];
         unsigned int freq = 0;
         while(!(n%i)) {
@@ -189,7 +200,10 @@ void sieve_kernel(bool *sieve_gpu, unsigned int sieve_size, unsigned int n, unsi
 
     if(global_thread_index > 0 && global_thread_index < sieve_size) {
         unsigned int p = 1 + (2 * global_thread_index);
-        for (unsigned int i = p * p; i <= limit; i += p)
-            sieve_gpu[(i-1)/2] = false;
+        unsigned int step_size = 2*p;
+        for (unsigned int i = p * p; i <= limit; i += step_size) {
+            int idx = (i - 1) / 2;
+            sieve_gpu[idx] = false;
+        }
     }
 }
