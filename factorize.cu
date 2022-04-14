@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <cuda.h>
 #include <stdlib.h>
+#include <limits.h>
 using namespace std;
 
 // Function declarations
@@ -78,7 +79,7 @@ unsigned int count_two_divisible(unsigned int &n) {
 bool* generate_sieve(unsigned int n, unsigned int &sieve_size) {
     // Initialize sieve array
     unsigned int limit = ceil(sqrt(n));
-    sieve_size = ceil((double)limit/2);
+    sieve_size = ceil(ceil((double)limit/2) / sizeof(unsigned int));
     unsigned int sieve_bytes = sieve_size * sizeof(bool);
 
     bool *sieve = (bool *)calloc(sieve_size, sizeof(bool));
@@ -87,7 +88,7 @@ bool* generate_sieve(unsigned int n, unsigned int &sieve_size) {
         exit(1);
     }
     for(int i=0; i<sieve_size; i++) {
-        sieve[i] = true;
+        sieve[i] = UINT_MAX;
     }
 
     // Copy sieve to GPU
@@ -114,6 +115,28 @@ bool* generate_sieve(unsigned int n, unsigned int &sieve_size) {
     return sieve;
 }
 
+bool get_bit(unsigned int* arr, unsigned int idx) {
+    int array_idx = idx / sizeof (unsigned int);
+    int bit_offset = idx % sizeof(bool);
+    int mask =  1 << (sizeof(unsigned int) - bit_offset -1);
+    return arr[array_idx] & mask;
+}
+
+void set_bit(unsigned int* arr, unsigned int idx) {
+    int array_idx = idx / sizeof (unsigned int);
+    int bit_offset = idx % sizeof(bool);
+    int mask =  1 << (sizeof(unsigned int) - bit_offset - 1);
+    arr[array_idx] |= mask;
+}
+
+__device__
+void unset_bit(bool* arr, unsigned int idx) {
+    int array_idx = idx / sizeof (bool);
+    int bit_offset = idx % sizeof (bool);
+    int mask =  1 << !(sizeof(bool) - bit_offset - 1);
+    arr[array_idx] &= mask;
+}
+
 unsigned int *generate_prime_numbers_array(bool *sieve, unsigned int sieve_size, unsigned int &prime_number_array_size) {
     prime_number_array_size = 0;
     for(int i=0; i<sieve_size; i++) {
@@ -134,10 +157,10 @@ unsigned int *generate_prime_numbers_array(bool *sieve, unsigned int sieve_size,
 
 char *prime_factorization(unsigned int *prime_number_array, unsigned int array_size, unsigned int n) {
     // Initialize frequency table on host
-    unsigned int frequency_table_bytes = array_size * sizeof(char);
     unsigned int prime_number_array_bytes = array_size * sizeof(unsigned int);
+    unsigned int frequency_table_bytes = array_size * sizeof(char);
 
-    char *frequency_table = (char *)calloc(array_size, sizeof(char));
+    char *frequency_table = (char *)calloc(frequency_table_bytes, sizeof(char));
     if(!frequency_table) {
         fprintf(stderr, "Cannot allocate the 1x%u frequency table.\n", array_size);
         exit(1);
@@ -187,7 +210,7 @@ void sieve_kernel(bool *sieve_gpu, unsigned int sieve_size, unsigned int n, unsi
         unsigned int step_size = 2*p;
         for (unsigned int i = p * p; i <= limit; i += step_size) {
             int idx = (i - 1) / 2;
-            sieve_gpu[idx] = false;
+            unset_bit(sieve_gpu, idx);
         }
     }
 }
