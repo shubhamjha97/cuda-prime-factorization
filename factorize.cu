@@ -4,11 +4,6 @@
 #include <stdlib.h>
 using namespace std;
 
-
-// TODO: Add a global variable n which is reduced by (i^freq)
-// TODO: Make sieve size sqrt
-// TODO: remove temp logic from preprocessing
-
 // Function declarations
 void processResult(unsigned int, unsigned int, unsigned int *, char *, unsigned int);
 void printUnsignedInteger(unsigned int);
@@ -36,19 +31,8 @@ int main(int argc, char* argv[]) {
     unsigned int prime_number_array_size = 0;
     unsigned int *prime_number_array = generate_prime_numbers_array(sieve, sieve_size, prime_number_array_size);
 
-    // TODO: remove
-    for(int i=0; i<prime_number_array_size; i++) {
-        printf("%u ", prime_number_array[i]);
-    }
-    printf("\n");
-
     // Generate prime factorization
     char *prime_factors_freq = prime_factorization(prime_number_array, prime_number_array_size, n);
-
-//    // TODO: remove
-//    for(unsigned int i=0; i<prime_number_array_size; i++) {
-//        printf("Freq %u(%u):%u\n", 1+2*i, i, prime_factors_freq[i]);
-//    }
 
     // Process and print the result
     processResult(n, two_freq, prime_number_array, prime_factors_freq, prime_number_array_size);
@@ -61,7 +45,7 @@ void printUnsignedInteger(unsigned int i) {
 }
 
 void processResult(unsigned int n, unsigned int two_freq, unsigned int *prime_number_array, char *frequency_table, unsigned int frequency_table_size) {
-//    unsigned int temp = 1;
+    unsigned int temp = 1;
     while(two_freq--) {
         printUnsignedInteger(2);
     }
@@ -71,15 +55,15 @@ void processResult(unsigned int n, unsigned int two_freq, unsigned int *prime_nu
             while(frequency_table[i]--) {
                 int current = prime_number_array[i];
                 printUnsignedInteger(current);
-//                temp *= current;
+                temp *= current;
             }
         }
     }
 
     // Prime number case
-    //    if(temp!=n) {
-    //        printUnsignedInteger(n);
-    //    }
+    if(temp!=n) {
+        printUnsignedInteger(n/temp);
+    }
 }
 
 unsigned int count_two_divisible(unsigned int &n) {
@@ -93,7 +77,7 @@ unsigned int count_two_divisible(unsigned int &n) {
 
 bool* generate_sieve(unsigned int n, unsigned int &sieve_size) {
     // Initialize sieve array
-    unsigned int limit = n; // TODO: ceil(sqrt(n));
+    unsigned int limit = ceil(sqrt(n));
     sieve_size = ceil((double)limit/2);
     unsigned int sieve_bytes = sieve_size * sizeof(bool);
 
